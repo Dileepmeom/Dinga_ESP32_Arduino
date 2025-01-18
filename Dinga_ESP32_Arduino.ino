@@ -3,11 +3,12 @@
 #include "WiFiModule.h" // Include the WiFi module
 #include "EncoderModule.h" // Include the encoder module
 #include <ArduinoJson.h> // Include ArduinoJson library
+#include "VL53L0X_Sensors.h"
 
 // Define GPIO pins for tasks
-#define TASK1_GPIO 2   // Task1 toggles the internal LED (GPIO 2)
-#define TASK2_GPIO 4  // Task2 toggles GPIO 26
-#define TASK3_GPIO 15  // Task3 toggles GPIO 27
+// #define TASK1_GPIO 2   // Task1 toggles the internal LED (GPIO 2)
+// #define TASK2_GPIO 4  // Task2 toggles GPIO 26
+// #define TASK3_GPIO 15  // Task3 toggles GPIO 27
 
 // Encoder variables
 volatile uint32_t pulseCount = 0; // Counts encoder pulses
@@ -33,19 +34,20 @@ void Task1(void *pvParameters) {
     const TickType_t xFrequency = pdMS_TO_TICKS(10); // 10ms
     TickType_t xLastWakeTime = xTaskGetTickCount();  // Initialize wake time
     for (;;) {
-        digitalWrite(TASK1_GPIO, !digitalRead(TASK1_GPIO)); // Toggle GPIO
+        //digitalWrite(TASK1_GPIO, !digitalRead(TASK1_GPIO)); // Toggle GPIO
         task1Counter++;                                    // Increment Task1 counter
         vTaskDelayUntil(&xLastWakeTime, xFrequency);       // Wait for next cycle
     }
 }
 
 void Task2(void *pvParameters) {
-    const TickType_t xFrequency = pdMS_TO_TICKS(50); // 50ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(500); // 50ms
     TickType_t xLastWakeTime = xTaskGetTickCount();  // Initialize wake time
     for (;;) {
-        digitalWrite(TASK2_GPIO, !digitalRead(TASK2_GPIO)); // Toggle GPIO
+        //digitalWrite(TASK2_GPIO, !digitalRead(TASK2_GPIO)); // Toggle GPIO
         task2Counter++;                                    // Increment Task2 counter
         vTaskDelayUntil(&xLastWakeTime, xFrequency);       // Wait for next cycle
+        getSensorData(); // Fetch and print sensor data
     }
 }
 
@@ -66,18 +68,21 @@ void sendJsonToWebSocket(const JsonObject& json) {
 }
 
 void Task3(void *pvParameters) {
-    const TickType_t xFrequency = pdMS_TO_TICKS(100); // 100ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(200); // 100ms
     TickType_t xLastWakeTime = xTaskGetTickCount();   // Initialize wake time
+
+    // Buffer for printing
+    char buffer[128];
+
     for (;;) {
-        digitalWrite(TASK3_GPIO, !digitalRead(TASK3_GPIO)); // Toggle GPIO
+        //digitalWrite(TASK3_GPIO, !digitalRead(TASK3_GPIO)); // Toggle GPIO
         task3Counter++;                                    // Increment Task3 counter
 
         if (show_device_stats) {
-            // Create JSON object
-            StaticJsonDocument<256> jsonDoc;
+            // Create JSON object (minimized usage)
+            StaticJsonDocument<128> jsonDoc;
             JsonObject json = jsonDoc.to<JsonObject>();
 
-            // Add device stats to JSON
             size_t freeHeap = xPortGetFreeHeapSize();
             size_t totalHeap = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
             UBaseType_t highWaterMark = uxTaskGetStackHighWaterMark(NULL);
@@ -90,39 +95,37 @@ void Task3(void *pvParameters) {
             // Send JSON to WebSocket
             sendJsonToWebSocket(json);
 
-            // Print to Serial
-            Serial.print("Free Heap: ");
-            Serial.print(freeHeap);
-            Serial.print(" bytes, Total Heap: ");
-            Serial.print(totalHeap);
-            Serial.print(" bytes, Used: ");
-            Serial.print((totalHeap - freeHeap) * 100 / totalHeap);
-            Serial.println("%");
-
-            Serial.print("Task Stack High Water Mark: ");
-            Serial.print(highWaterMark);
-            Serial.println(" words");
+            // Use buffer for serial printing
+            snprintf(buffer, sizeof(buffer),
+                     "Heap: %d/%d bytes used (%d%%), Stack High Water Mark: %d words",
+                     (totalHeap - freeHeap),
+                     totalHeap,
+                     (totalHeap - freeHeap) * 100 / totalHeap,
+                     highWaterMark);
+            Serial.println(buffer);
         }
 
         vTaskDelayUntil(&xLastWakeTime, xFrequency); // Wait for next cycle
     }
 }
 
+
 void setup() {
     // Initialize Serial Monitor
     Serial.begin(115200);
     setupWiFiModule(); // Initialize WiFi and WebSocket
+    initializeSensors(); // Initialize sensors
 
     while (!Serial); // Wait for Serial Monitor to connect (useful for some setups)
 
     // Initialize GPIO pins as OUTPUT
-    pinMode(TASK1_GPIO, OUTPUT); // Internal LED
-    pinMode(TASK2_GPIO, OUTPUT);
-    pinMode(TASK3_GPIO, OUTPUT);
+    // pinMode(TASK1_GPIO, OUTPUT); // Internal LED
+    // pinMode(TASK2_GPIO, OUTPUT);
+    // pinMode(TASK3_GPIO, OUTPUT);
 
     // Create RTOS Tasks
     xTaskCreate(Task1, "Task1", 1024, NULL, 2, &Task1Handle);
-    xTaskCreate(Task2, "Task2", 1024, NULL, 2, &Task2Handle);
+    xTaskCreate(Task2, "Task2", 4096, NULL, 2, &Task2Handle);
     xTaskCreate(Task3, "Task3", 1024, NULL, 2, &Task3Handle);
 
     // Initialize motors

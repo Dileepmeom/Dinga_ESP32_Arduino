@@ -3,8 +3,8 @@
 // Define GPIO pins for motors (H-Bridge control)
 #define MOTOR1_A 32
 #define MOTOR1_B 33
-#define MOTOR2_A 26
-#define MOTOR2_B 25
+#define MOTOR2_A 25
+#define MOTOR2_B 26
 
 // Global variable to store motor status
 MotorStatus motorStatus = {0, 0, STOP};
