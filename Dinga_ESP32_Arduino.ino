@@ -41,7 +41,7 @@ void Task1(void *pvParameters) {
 }
 
 void Task2(void *pvParameters) {
-    const TickType_t xFrequency = pdMS_TO_TICKS(500); // 50ms
+    const TickType_t xFrequency = pdMS_TO_TICKS(10); // 50ms
     TickType_t xLastWakeTime = xTaskGetTickCount();  // Initialize wake time
     for (;;) {
         //digitalWrite(TASK2_GPIO, !digitalRead(TASK2_GPIO)); // Toggle GPIO

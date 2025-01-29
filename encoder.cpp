@@ -3,8 +3,8 @@
 #include "EncoderModule.h" // Include the encoder module header
 
 // Encoder pulse input pins
-#define ENCODER_PIN 4 // Connect to the encoder pulse output
-#define ENCODER_PIN_2 5 // Connect to the second encoder pulse output
+#define ENCODER_PIN 23 // Connect to the encoder pulse output
+#define ENCODER_PIN_2 16 // Connect to the second encoder pulse output
 
 // Pulse Counter units and channels
 #define PCNT_UNIT PCNT_UNIT_0 // Using Pulse Counter Unit 0

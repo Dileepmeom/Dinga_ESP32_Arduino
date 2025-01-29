@@ -9,7 +9,7 @@ Adafruit_VL53L0X sensor3 = Adafruit_VL53L0X();
 // Define XSHUT pins for each sensor
 #define XSHUT1 19
 #define XSHUT2 18
-#define XSHUT3 13
+#define XSHUT3 5
 
 void initializeSensors() {
     // Initialize XSHUT pins
@@ -46,7 +46,7 @@ void initializeSensors() {
     digitalWrite(XSHUT3, HIGH);  // Enable sensor 3
     delay(10);                   // Allow it to boot
     if (!sensor3.begin(0x32)) {  // Assign address 0x32
-        Serial.println("Failed to initialize sensor 3!");
+        Serial.print("Failed to initialize sensor 3!");
         while (1);
     }
     Serial.println("Sensor 3 initialized at 0x32");
@@ -57,31 +57,28 @@ void getSensorData() {
 
     // Read sensor 1
     sensor1.rangingTest(&measure, false);
-    Serial.print("Right sensor: ");
+    Serial.print("RS: ");
     if (measure.RangeStatus != 4) {
-        Serial.print(measure.RangeMilliMeter);
+        Serial.println(measure.RangeMilliMeter);
     } else {
         Serial.print("Out of range");
     }
-    Serial.println(" mm");
 
     // Read sensor 2
     sensor2.rangingTest(&measure, false);
-    Serial.print("Left sensor: ");
+    Serial.print("LS: ");
     if (measure.RangeStatus != 4) {
-        Serial.print(measure.RangeMilliMeter);
+        Serial.println(measure.RangeMilliMeter);
     } else {
         Serial.print("Out of range");
     }
-    Serial.println(" mm");
 
     // Read sensor 3
     sensor3.rangingTest(&measure, false);
-    Serial.print("Front sesnor: ");
+    Serial.print("FS: ");
     if (measure.RangeStatus != 4) {
-        Serial.print(measure.RangeMilliMeter);
+        Serial.println(measure.RangeMilliMeter);
     } else {
         Serial.print("Out of range");
     }
-    Serial.println(" mm");
 }
